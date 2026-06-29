@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مينو كافتريا</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --card: #1e1e1e;
+    --border: #2a2a2a;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #c9a84c22;
+    --text: #f0ead6;
+    --text-muted: #888;
+    --green: #4caf82;
+    --red: #e05a5a;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ===== NAV ===== */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.3rem; font-weight: 900; color: var(--gold);
+    cursor: pointer;
+  }
+  .nav-brand .icon { font-size: 1.5rem; }
+  .nav-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 18px; border-radius: 50px;
+    border: none; cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    transition: all .2s;
+  }
+  .btn-gold {
+    background: var(--gold); color: #0d0d0d;
+  }
+  .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent; color: var(--gold);
+    border: 1.5px solid var(--gold);
+  }
+  .btn-outline:hover { background: var(--gold-dim); }
+  .btn-danger { background: var(--red); color: #fff; font-size: 0.8rem; padding: 6px 14px; }
+  .btn-success { background: var(--green); color: #fff; font-size: 0.8rem; padding: 6px 14px; }
+
+  /* ===== MENU PAGE ===== */
+  .hero {
+    text-align: center;
+    padding: 56px 20px 32px;
+    background: radial-gradient(ellipse at top, #c9a84c18 0%, transparent 60%);
+  }
+  .hero-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+  .hero h1 { font-size: 2.4rem; font-weight: 900; color: var(--gold); line-height: 1.2; }
+  .hero p { color: var(--text-muted); margin-top: 8px; font-size: 0.95rem; }
+
+  /* Category tabs */
+  .tabs-wrap {
+    overflow-x: auto; padding: 20px 16px 0;
+    scrollbar-width: none;
+  }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+  .tabs {
+    display: flex; gap: 10px;
+    white-space: nowrap; min-width: max-content;
+  }
+  .tab {
+    padding: 8px 20px; border-radius: 50px;
+    border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--text-muted);
+    cursor: pointer; font-family: 'Cairo', sans-serif;
+    font-size: 0.9rem; font-weight: 600;
+    transition: all .2s;
+  }
+  .tab.active, .tab:hover {
+    border-color: var(--gold); color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  /* Items grid */
+  .section-title {
+    font-size: 1.2rem; font-weight: 700;
+    color: var(--gold); margin: 28px 16px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to left, transparent, var(--gold-dim));
+  }
+
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px; padding: 0 16px 20px;
+  }
+
+  .item-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform .2s, border-color .2s;
+  }
+  .item-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold);
+  }
+  .item-card.unavailable { opacity: .45; }
+
+  .item-img {
+    width: 100%; aspect-ratio: 4/3;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    position: relative;
+  }
+  .badge-out {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--red); color: #fff;
+    font-size: 0.65rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 50px;
+  }
+
+  .item-body { padding: 10px 12px 14px; }
+  .item-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+  .item-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.5; }
+  .item-price {
+    font-size: 1.05rem; font-weight: 900; color: var(--gold);
+  }
+  .item-price span { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted); font-size: 1rem;
+  }
+  .empty .big { font-size: 3rem; margin-bottom: 12px; }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 30px 20px;
+    color: var(--text-muted); font-size: 0.8rem;
+    border-top: 1px solid var(--border); margin-top: 20px;
+  }
+
+  /* ===== ADMIN PAGE ===== */
+  .admin-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .admin-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px; margin-bottom: 20px;
+  }
+  .admin-section h2 {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--gold); margin-bottom: 18px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 12px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--card); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 10px;
+    padding: 10px 12px; font-family: 'Cairo', sans-serif;
+    font-size: 0.9rem; outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--gold);
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group select option { background: var(--card); }
+
+  /* emoji picker shortcut */
+  .emoji-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 8px;
+  }
+  .emoji-btn {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer;
+    font-size: 1.2rem; transition: all .15s;
+  }
+  .emoji-btn:hover { border-color: var(--gold); transform: scale(1.15); }
+
+  /* Items table */
+  .items-table { width: 100%; border-collapse: collapse; }
+  .items-table th {
+    text-align: right; font-size: 0.8rem;
+    color: var(--text-muted); padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .items-table td {
+    padding: 12px 12px; font-size: 0.88rem;
+    border-bottom: 1px solid #1e1e1e;
+    vertical-align: middle;
+  }
+  .items-table tr:last-child td { border-bottom: none; }
+  .items-table tr:hover td { background: var(--gold-dim); }
+
+  .tag {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 50px; font-size: 0.72rem; font-weight: 600;
+  }
+  .tag-available { background: #4caf8222; color: var(--green); }
+  .tag-unavailable { background: #e05a5a22; color: var(--red); }
+
+  .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Categories manager */
+  .cat-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 50px; padding: 6px 14px;
+    font-size: 0.85rem;
+  }
+  .cat-chip button {
+    background: none; border: none; color: var(--red);
+    cursor: pointer; font-size: 1rem; line-height: 1;
+  }
+
+  /* QR section */
+  .qr-box {
+    display: flex; gap: 30px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  #qrcode {
+    background: #fff; padding: 16px; border-radius: 12px;
+    display: inline-block;
+  }
+  .qr-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+  .qr-info p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+  .qr-url {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 0.82rem; word-break: break-all;
+    color: var(--gold); margin: 10px 0;
+  }
+
+  /* Cafe settings */
+  .settings-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Responsive */
+  @media(max-width: 580px) {
+    .hero h1 { font-size: 1.8rem; }
+    .form-row { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .qr-box { flex-direction: column; align-items: center; }
+    .items-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .items-table th:nth-child(3), .items-table td:nth-child(3) { display: none; }
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: #fff;
+    padding: 12px 24px; border-radius: 50px;
+    font-size: 0.9rem; font-weight: 600;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s; z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Login overlay */
+  .login-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500; backdrop-filter: blur(20px);
+  }
+  .login-box {
+    background: linear-gradient(145deg, #1a1a1a, #111111);
+    border: 1px solid #c9a84c44;
+    border-radius: 24px; padding: 44px 36px;
+    width: 90%; max-width: 380px; text-align: center;
+    box-shadow: 0 0 60px #c9a84c18, 0 24px 60px rgba(0,0,0,0.6);
+    position: relative; overflow: hidden;
+  }
+  .login-box::before {
+    content: '';
+    position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, #c9a84c22 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .login-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px;
+    background: linear-gradient(135deg, #c9a84c33, #c9a84c11);
+    border: 1.5px solid #c9a84c55;
+    border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+  }
+  .login-box h2 {
+    color: var(--gold); font-size: 1.4rem; font-weight: 900;
+    margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .login-box > p {
+    color: var(--text-muted); font-size: 0.84rem; margin-bottom: 28px; line-height: 1.6;
+  }
+  .login-input-wrap {
+    position: relative; margin-bottom: 16px;
+  }
+  .login-input-icon {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 1rem; color: var(--text-muted); pointer-events: none;
+  }
+  .login-box input {
+    width: 100%; background: #0d0d0d;
+    border: 1.5px solid var(--border); color: var(--text);
+    border-radius: 12px; padding: 14px 42px 14px 14px;
+    font-family: 'Cairo', sans-serif; font-size: 0.95rem;
+    outline: none; text-align: right;
+    transition: border-color .25s, box-shadow .25s;
+  }
+  .login-box input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px #c9a84c18;
+  }
+  .login-box input::placeholder { color: #555; }
+  .login-box .btn {
+    width: 100%; padding: 14px;
+    font-size: 1rem; font-weight: 700;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: #0d0d0d;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 20px #c9a84c33;
+    transition: all .25s;
+  }
+  .login-box .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px #c9a84c44;
+  }
+  .login-error {
+    color: var(--red); font-size: 0.82rem;
+    margin-top: 12px; display: none;
+    background: #e05a5a11; border: 1px solid #e05a5a33;
+    border-radius: 8px; padding: 8px 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- MENU PAGE -->
+<div class="page active" id="pageMenu">
+  <nav class="nav">
+    <div class="nav-brand" id="brandClick">
+      <span class="icon">☕</span>
+      <span id="navCafeName">كافتريا مينو</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" id="btnAdmin" onclick="showAdmin()" disabled>⚙ لوحة التحكم</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-emoji" id="heroEmoji">☕</div>
+    <h1 id="heroName">كافتريا مينو</h1>
+    <p id="heroDesc">اختر من قائمتنا الشهية 🍽️</p>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs" id="categoryTabs">
+      <div class="tab active" data-cat="all" onclick="filterCat('all', this)">الكل</div>
+    </div>
+  </div>
+
+  <div id="menuContent"><div class="empty"><div class="big">⏳</div><p>جاري تحميل المنيو...</p></div></div>
+
+  <footer class="footer">
+    <p id="footerText">استمتع بوقتك معنا ❤️</p>
+  </footer>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="pageAdmin">
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="icon">⚙️</span>
+      <span>لوحة التحكم</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="showMenu()">👁 عرض المنيو</button>
+      <button class="btn btn-gold" onclick="logout()">خروج</button>
+    </div>
+  </nav>
+
+  <div class="admin-wrap">
+
+    <!-- Cafe Settings -->
+    <div class="admin-section">
+      <h2>⚙️ إعدادات الكافتريا</h2>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>اسم الكافتريا</label>
+          <input type="text" id="setCafeName" placeholder="اسم الكافتريا">
+        </div>
+        <div class="form-group">
+          <label>وصف قصير</label>
+          <input type="text" id="setCafeDesc" placeholder="وصف الكافتريا">
+        </div>
+        <div class="form-group">
+          <label>إيموجي الكافتريا</label>
+          <input type="text" id="setCafeEmoji" placeholder="☕" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>نص الفوتر</label>
+          <input type="text" id="setCafeFooter" placeholder="استمتع بوقتك...">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-gold" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+      </div>
+    </div>
+
+    <!-- Add Item -->
+    <div class="admin-section">
+      <h2>➕ إضافة صنف جديد</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>اسم الصنف *</label>
+          <input type="text" id="inName" placeholder="مثال: قهوة تركية">
+        </div>
+        <div class="form-group">
+          <label>التصنيف</label>
+          <select id="inCat">
+            <option value="">بدون تصنيف</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>السعر (جنيه) *</label>
+          <input type="number" id="inPrice" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>الإيموجي (صورة الصنف)</label>
+          <input type="text" id="inEmoji" placeholder="☕" maxlength="4">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>وصف الصنف (اختياري)</label>
+          <textarea id="inDesc" placeholder="وصف مختصر..."></textarea>
+        </div>
+      </div>
+      <div class="emoji-grid" id="emojiPicker"></div>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <button class="btn btn-gold" onclick="addItem()">➕ إضافة الصنف</button>
+        <label style="font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer">
+          <input type="checkbox" id="inAvailable" checked> متاح حالياً
+        </label>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="admin-section">
+      <h2>📂 إدارة التصنيفات</h2>
+      <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap">
+        <input type="text" id="newCatName" placeholder="اسم التصنيف الجديد"
+          style="background:var(--card);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:'Cairo',sans-serif;font-size:.9rem;outline:none;flex:1;min-width:150px">
+        <button class="btn btn-gold" onclick="addCategory()">إضافة</button>
+      </div>
+      <div class="cat-list" id="catList"></div>
+    </div>
+
+    <!-- Items List -->
+    <div class="admin-section">
+      <h2>📋 قائمة الأصناف (<span id="itemCount">0</span>)</h2>
+      <div style="overflow-x:auto">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>الصنف</th>
+              <th>التصنيف</th>
+              <th>السعر</th>
+              <th>الحالة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="admin-section">
+      <h2>📱 كيو آر كود المنيو</h2>
+      <div class="qr-box">
+        <div>
+          <div id="qrcode"></div>
+          <button class="btn btn-gold" style="margin-top:12px; width:100%"
+            onclick="downloadQR()">⬇ تحميل الـ QR</button>
+        </div>
+        <div class="qr-info">
+          <h3>كيف يعمل؟</h3>
+          <p>
+            امسح هذا الكيو آر كود بكاميرا هاتفك<br>
+            سيفتح مباشرةً صفحة المنيو الخاصة بك 🎉<br><br>
+            <strong style="color:var(--gold)">ملاحظة:</strong><br>
+            الكيو آر يشير إلى الصفحة الحالية.<br>
+            عند الاستضافة على الإنترنت سيعمل مع جميع الزبائن.
+          </p>
+          <div class="qr-url" id="qrUrlDisplay"></div>
+          <button class="btn btn-outline" onclick="copyLink()">📋 نسخ الرابط</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <h2>لوحة التحكم</h2>
+    <p>أدخل كلمة المرور للوصول إلى الإعدادات</p>
+    <div class="login-input-wrap">
+      <span class="login-input-icon">🔑</span>
+      <input type="password" id="pwInput" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') checkLogin()">
+    </div>
+    <button class="btn btn-gold" onclick="checkLogin()">دخول</button>
+    <div class="login-error" id="loginErr">⚠️ كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ DATA ============
+const PASS_KEY = 'cafe_admin_pass';
+const DATA_KEY = 'cafe_data';
+
+const defaultData = {
+  settings: {
+    name: 'كافتريا مينو',
+    desc: 'اختر من قائمتنا الشهية 🍽️',
+    emoji: '☕',
+    footer: 'استمتع بوقتك معنا ❤️',
+    password: '1234'
+  },
+  categories: ['مشروبات ساخنة', 'مشروبات باردة', 'وجبات', 'حلويات'],
+  items: [
+    { id: 1, name: 'قهوة تركية', cat: 'مشروبات ساخنة', price: 500, emoji: '☕', desc: 'قهوة تركية أصيلة', available: true },
+    { id: 2, name: 'كابتشينو', cat: 'مشروبات ساخنة', price: 800, emoji: '☕', desc: '', available: true },
+    { id: 3, name: 'عصير برتقال', cat: 'مشروبات باردة', price: 600, emoji: '🍊', desc: 'طازج يومياً', available: true },
+    { id: 4, name: 'برجر دجاج', cat: 'وجبات', price: 2500, emoji: '🍔', desc: 'برجر دجاج مع صلصة خاصة', available: true },
+    { id: 5, name: 'كيك شوكولاتة', cat: 'حلويات', price: 700, emoji: '🍰', desc: '', available: false },
+  ]
+};
+
+let data = JSON.parse(JSON.stringify(defaultData)); // safe in-memory default until shared data loads
+let editingId = null;
+let dataLoaded = false;
+
+async function loadData() {
+  try {
+    const result = await window.storage.get(DATA_KEY, true); // shared = true: same data for every visitor
+    data = JSON.parse(result.value);
+  } catch (err) {
+    // No saved data yet (first run) or a storage error — fall back to defaults
+    console.warn('لا توجد بيانات محفوظة بعد، سيتم استخدام البيانات الافتراضية', err);
+    data = JSON.parse(JSON.stringify(defaultData));
+  }
+  dataLoaded = true;
+}
+
+async function save() {
+  try {
+    const result = await window.storage.set(DATA_KEY, JSON.stringify(data), true); // shared = true
+    if (!result) toast('⚠️ حصل خطأ في حفظ البيانات');
+  } catch (err) {
+    console.error(err);
+    toast('⚠️ حصل خطأ في حفظ البيانات، حاولي تاني');
+  }
+}
+
+// ============ PAGES ============
+function showMenu() {
+  document.getElementById('pageAdmin').classList.remove('active');
+  document.getElementById('pageMenu').classList.add('active');
+  renderMenu();
+}
+
+function showAdmin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  setTimeout(() => document.getElementById('pwInput').focus(), 100);
+}
+
+function checkLogin() {
+  const pw = document.getElementById('pwInput').value;
+  if (pw === data.settings.password) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('pageMenu').classList.remove('active');
+    document.getElementById('pageAdmin').classList.add('active');
+    renderAdmin();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+function logout() {
+  showMenu();
+}
+
+// ============ MENU RENDER ============
+let currentCat = 'all';
+
+function renderMenu() {
+  const s = data.settings;
+  document.getElementById('navCafeName').textContent = s.name;
+  document.getElementById('heroName').textContent = s.name;
+  document.getElementById('heroDesc').textContent = s.desc;
+  document.getElementById('heroEmoji').textContent = s.emoji;
+  document.getElementById('footerText').textContent = s.footer;
+  document.title = s.name;
+
+  // Tabs
+  const tabsEl = document.getElementById('categoryTabs');
+  tabsEl.innerHTML = `<div class="tab ${currentCat==='all'?'active':''}" data-cat="all" onclick="filterCat('all',this)">الكل</div>`;
+  data.categories.forEach(c => {
+    const active = currentCat === c ? 'active' : '';
+    tabsEl.innerHTML += `<div class="tab ${active}" data-cat="${c}" onclick="filterCat('${c}',this)">${c}</div>`;
+  });
+
+  renderItems();
+}
+
+function filterCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderItems();
+}
+
+function renderItems() {
+  const content = document.getElementById('menuContent');
+  const filtered = currentCat === 'all'
+    ? data.items
+    : data.items.filter(i => i.cat === currentCat);
+
+  if (!filtered.length) {
+    content.innerHTML = '<div class="empty"><div class="big">🍽️</div><p>لا توجد أصناف في هذا التصنيف</p></div>';
+    return;
+  }
+
+  let html = '';
+
+  if (currentCat === 'all') {
+    // Group by category
+    const groups = {};
+    const uncatKey = '—';
+    filtered.forEach(item => {
+      const key = item.cat || uncatKey;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+
+    Object.entries(groups).forEach(([cat, items]) => {
+      html += `<div class="section-title">${cat}</div>`;
+      html += `<div class="items-grid">`;
+      items.forEach(item => html += itemCardHTML(item));
+      html += `</div>`;
+    });
+  } else {
+    html += `<div class="items-grid">`;
+    filtered.forEach(item => html += itemCardHTML(item));
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+function itemCardHTML(item) {
+  return `
+    <div class="item-card ${item.available ? '' : 'unavailable'}">
+      <div class="item-img">
+        ${item.emoji || '🍽️'}
+        ${!item.available ? '<div class="badge-out">نفد</div>' : ''}
+      </div>
+      <div class="item-body">
+        <div class="item-name">${item.name}</div>
+        ${item.desc ? `<div class="item-desc">${item.desc}</div>` : ''}
+        <div class="item-price">${Number(item.price).toLocaleString()} <span>جنيه</span></div>
+      </div>
+    </div>`;
+}
+
+// ============ ADMIN RENDER ============
+const EMOJIS = ['☕','🍵','🧋','🥤','🍹','🍺','🥛','🧃','🍔','🍕','🌮','🌯','🥗','🍜','🍝','🍣','🍱','🥪','🍟','🌭','🍗','🥩','🍛','🍲','🥣','🍞','🥐','🧆','🥞','🍳','🥚','🧀','🥑','🫔','🍰','🎂','🍩','🍪','🍫','🍬','🍦','🍨','🧁','🍮','🍭'];
+
+function renderAdmin() {
+  // Load settings
+  const s = data.settings;
+  document.getElementById('setCafeName').value = s.name;
+  document.getElementById('setCafeDesc').value = s.desc;
+  document.getElementById('setCafeEmoji').value = s.emoji;
+  document.getElementById('setCafeFooter').value = s.footer;
+
+  // Emoji picker
+  const picker = document.getElementById('emojiPicker');
+  picker.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn" onclick="pickEmoji('${e}')" title="${e}">${e}</button>`
+  ).join('');
+
+  renderCatSelect();
+  renderCatList();
+  renderItemsTable();
+  generateQR();
+}
+
+function renderCatSelect() {
+  const sel = document.getElementById('inCat');
+  sel.innerHTML = '<option value="">بدون تصنيف</option>';
+  data.categories.forEach(c => {
+    sel.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+}
+
+function renderCatList() {
+  const list = document.getElementById('catList');
+  if (!data.categories.length) {
+    list.innerHTML = '<span style="color:var(--text-muted);font-size:.85rem">لا توجد تصنيفات بعد</span>';
+    return;
+  }
+  list.innerHTML = data.categories.map(c => `
+    <div class="cat-chip">
+      <span>${c}</span>
+      <button onclick="removeCategory('${c}')" title="حذف">×</button>
+    </div>`).join('');
+}
+
+function renderItemsTable() {
+  const tbody = document.getElementById('itemsTableBody');
+  document.getElementById('itemCount').textContent = data.items.length;
+
+  if (!data.items.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px">لا توجد أصناف بعد</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.items.map(item => `
+    <tr>
+      <td>${item.emoji || '🍽️'} ${item.name}</td>
+      <td>${item.cat || '—'}</td>
+      <td>${Number(item.price).toLocaleString()} ج</td>
+      <td>
+        <span class="tag ${item.available ? 'tag-available' : 'tag-unavailable'}">
+          ${item.available ? 'متاح' : 'نفد'}
+        </span>
+      </td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline" style="font-size:.75rem;padding:5px 10px"
+            onclick="toggleAvail(${item.id})">
+            ${item.available ? '🚫 إيقاف' : '✅ تفعيل'}
+          </button>
+          <button class="btn btn-danger" onclick="deleteItem(${item.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ============ ACTIONS ============
+async function saveSettings() {
+  data.settings.name = document.getElementById('setCafeName').value.trim() || data.settings.name;
+  data.settings.desc = document.getElementById('setCafeDesc').value.trim() || data.settings.desc;
+  data.settings.emoji = document.getElementById('setCafeEmoji').value.trim() || data.settings.emoji;
+  data.settings.footer = document.getElementById('setCafeFooter').value.trim() || data.settings.footer;
+  await save();
+  toast('تم حفظ الإعدادات ✅');
+}
+
+function pickEmoji(e) {
+  document.getElementById('inEmoji').value = e;
+}
+
+async function addCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) return;
+  if (data.categories.includes(name)) { toast('التصنيف موجود مسبقاً ⚠️'); return; }
+  data.categories.push(name);
+  await save();
+  document.getElementById('newCatName').value = '';
+  renderCatSelect();
+  renderCatList();
+  toast('تم إضافة التصنيف ✅');
+}
+
+async function removeCategory(cat) {
+  if (!confirm(`هل تريد حذف تصنيف "${cat}"؟`)) return;
+  data.categories = data.categories.filter(c => c !== cat);
+  data.items.forEach(i => { if (i.cat === cat) i.cat = ''; });
+  await save();
+  renderCatSelect();
+  renderCatList();
+  renderItemsTable();
+  toast('تم حذف التصنيف');
+}
+
+async function addItem() {
+  const name = document.getElementById('inName').value.trim();
+  const price = parseFloat(document.getElementById('inPrice').value);
+  if (!name || !price) { toast('أدخل الاسم والسعر ⚠️'); return; }
+
+  const item = {
+    id: Date.now(),
+    name,
+    cat: document.getElementById('inCat').value,
+    price,
+    emoji: document.getElementById('inEmoji').value.trim() || '🍽️',
+    desc: document.getElementById('inDesc').value.trim(),
+    available: document.getElementById('inAvailable').checked
+  };
+
+  data.items.push(item);
+  await save();
+
+  // Reset
+  ['inName','inPrice','inEmoji','inDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inAvailable').checked = true;
+  document.getElementById('inCat').value = '';
+
+  renderItemsTable();
+  toast('تم إضافة الصنف ✅');
+}
+
+async function toggleAvail(id) {
+  const item = data.items.find(i => i.id === id);
+  if (item) { item.available = !item.available; await save(); renderItemsTable(); }
+}
+
+async function deleteItem(id) {
+  if (!confirm('هل تريد حذف هذا الصنف؟')) return;
+  data.items = data.items.filter(i => i.id !== id);
+  await save();
+  renderItemsTable();
+  toast('تم حذف الصنف');
+}
+
+// ============ QR ============
+let qrInstance = null;
+
+function generateQR() {
+  const url = window.location.href.split('#')[0];
+  document.getElementById('qrUrlDisplay').textContent = url;
+
+  const qrEl = document.getElementById('qrcode');
+  qrEl.innerHTML = '';
+
+  qrInstance = new QRCode(qrEl, {
+    text: url,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+function downloadQR() {
+  const canvas = document.querySelector('#qrcode canvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = 'menu-qr.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+function copyLink() {
+  const url = window.location.href.split('#')[0];
+  navigator.clipboard.writeText(url).then(() => toast('تم نسخ الرابط 📋'));
+}
+
+// ============ TOAST ============
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============ INIT ============
+(async function init() {
+  await loadData();
+  renderMenu();
+  document.getElementById('btnAdmin').disabled = false;
+})();
+</script>
+</body>
+</html>
